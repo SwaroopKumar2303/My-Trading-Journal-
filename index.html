@@ -1,0 +1,401 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#111827"><meta name="mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="icon.svg">
+<title>My Trading Journal</title><link rel="manifest" href="manifest.webmanifest">
+<style>
+*{box-sizing:border-box}body{margin:0;font-family:system-ui,-apple-system,Segoe UI,sans-serif;background:#f4f6f8;color:#111827}
+header{background:#111827;color:white;padding:20px 18px 16px;position:sticky;top:0;z-index:5}
+header h1{margin:0;font-size:21px}header p{margin:5px 0 0;color:#cbd5e1;font-size:13px}
+nav{display:flex;background:white;border-bottom:1px solid #e5e7eb;position:sticky;top:76px;z-index:4}
+nav button{flex:1;border:0;background:white;padding:12px 4px;font-size:12px;color:#64748b}nav button.active{color:#111827;font-weight:700;border-bottom:2px solid #111827}
+main{padding:16px;max-width:700px;margin:auto}.page{display:none}.page.active{display:block}
+.card{background:white;border:1px solid #e5e7eb;border-radius:14px;padding:15px;margin-bottom:12px}
+h2{font-size:17px;margin:0 0 12px}.muted{color:#64748b;font-size:13px}
+.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.stat{padding:12px;background:#f8fafc;border-radius:10px}.stat b{display:block;font-size:20px;margin-top:3px}
+label{font-size:12px;font-weight:650;color:#475569;display:block;margin:12px 0 5px}
+input,select,textarea{width:100%;padding:11px;border:1px solid #d1d5db;border-radius:9px;background:white;font:inherit;font-size:14px}
+textarea{min-height:78px;resize:vertical}
+.chips{display:flex;flex-wrap:wrap;gap:7px}.chip{border:1px solid #d1d5db;border-radius:20px;padding:8px 10px;background:white;font-size:12px;cursor:pointer}.chip.sel{background:#111827;color:white;border-color:#111827}
+button.primary{width:100%;border:0;background:#111827;color:white;border-radius:10px;padding:13px;font-weight:700;font-size:14px;margin-top:14px}
+button.secondary{border:1px solid #d1d5db;background:white;color:#111827;border-radius:9px;padding:10px 12px;font-weight:600;cursor:pointer}
+.row{display:flex;justify-content:space-between;gap:8px;align-items:center}.danger{color:#b91c1c}
+.trade{border-left:4px solid #111827}.trade h3{margin:0;font-size:15px}.trade p{margin:5px 0;font-size:12px;color:#64748b}.pnl{font-weight:800}.win{color:#15803d}.loss{color:#b91c1c}
+.progress{height:9px;background:#e5e7eb;border-radius:10px;overflow:hidden}.bar{height:100%;background:#111827}
+.small{font-size:11px}.empty{text-align:center;padding:35px 15px;color:#64748b}
+table{width:100%;border-collapse:collapse;font-size:12px}td,th{text-align:left;padding:8px 5px;border-bottom:1px solid #e5e7eb}
+</style>
+</head>
+<body>
+<header><h1>My Trading Journal</h1><p>Psychology • Discipline • Progress</p></header>
+<nav>
+<button class="active" onclick="showPage('home',this)">Home</button>
+<button onclick="showPage('add',this)">＋ Trade</button>
+<button onclick="showPage('history',this)">History</button><button onclick="showPage('calendar',this)">Calendar</button>
+<button onclick="showPage('psych',this)">Psychology</button>
+</nav>
+
+<main>
+<section id="home" class="page active">
+<div class="card">
+<h2>Today's status</h2>
+<div class="grid">
+<div class="stat"><span class="muted">Trades</span><b id="todayTrades">0 / 2</b></div>
+<div class="stat"><span class="muted">Rule adherence</span><b id="todayRules">—</b></div>
+</div>
+<button class="primary" onclick="showPage('add',[...document.querySelectorAll('nav button')].find(b=>b.textContent.includes('Trade')))">＋ RECORD TRADE</button>
+</div>
+<div class="card">
+<h2>Journal snapshot</h2>
+<div class="grid">
+<div class="stat"><span class="muted">Total trades</span><b id="totalTrades">0</b></div>
+<div class="stat"><span class="muted">Win rate</span><b id="winRate">—</b></div>
+<div class="stat"><span class="muted">Rules followed</span><b id="rulesRate">—</b></div>
+<div class="stat"><span class="muted">FOMO trades</span><b id="fomoCount">0</b></div>
+</div>
+</div>
+<div class="card">
+<h2>100-trade psychology goal</h2>
+<p class="muted" id="goalText">Record your first trade. The app will build your emotional pattern as you go.</p>
+<div class="progress"><div class="bar" id="goalBar" style="width:0%"></div></div>
+<p class="small" id="goalCount">0 / 100 trades</p>
+</div>
+</section>
+
+<section id="add" class="page">
+<div class="card">
+<h2 id="formTitle">Record trade</h2>
+<p class="muted">Keep it quick. Record what you actually saw and felt.</p>
+
+<label>Index</label><div class="chips" data-group="index">
+<button class="chip" onclick="pick(this,'index')">NIFTY</button><button class="chip" onclick="pick(this,'index')">BANK NIFTY</button><button class="chip" onclick="pick(this,'index')">SENSEX</button></div>
+
+<label>Option</label><div class="chips" data-group="option">
+<button class="chip" onclick="pick(this,'option')">CE</button><button class="chip" onclick="pick(this,'option')">PE</button></div>
+
+<div class="grid">
+<div><label>Strike</label><input id="strike" type="number" placeholder="e.g. 25000"></div>
+<div><label>Expiry</label><input id="expiry" type="date"></div>
+</div>
+<div class="grid">
+<div><label>Entry time</label><input id="entryTime" type="time"></div>
+<div><label>Entry price</label><input id="entryPrice" type="number" step="0.05"></div>
+</div>
+<div class="grid">
+<div><label>Exit time</label><input id="exitTime" type="time"></div>
+<div><label>Exit price</label><input id="exitPrice" type="number" step="0.05"></div>
+</div>
+<div class="grid">
+<div><label>Quantity</label><input id="qty" type="number" placeholder="1 lot / total qty"></div>
+<div><label>Capital (₹)</label><input id="capital" type="number" placeholder="for 1% risk check"></div>
+</div>
+
+<label>Entry candle</label>
+<div class="chips" data-group="candle">
+<button class="chip" onclick="pick(this,'candle')">Hammer</button><button class="chip" onclick="pick(this,'candle')">Inverse Hammer</button>
+<button class="chip" onclick="pick(this,'candle')">Bullish Engulfing</button><button class="chip" onclick="pick(this,'candle')">Bearish Engulfing</button>
+<button class="chip" onclick="pick(this,'candle')">Morning Star</button><button class="chip" onclick="pick(this,'candle')">Evening Star</button>
+<button class="chip" onclick="pick(this,'candle')">Bullish Inside Bar</button><button class="chip" onclick="pick(this,'candle')">Bearish Inside Bar</button>
+</div>
+
+<label>Why did you enter?</label><textarea id="why" placeholder="What did you see and why did it qualify?"></textarea>
+
+<label>How did you feel before entering?</label>
+<div class="chips" data-group="emotion">
+<button class="chip" onclick="toggle(this)">Calm</button><button class="chip" onclick="toggle(this)">Confident</button><button class="chip" onclick="toggle(this)">Nervous</button><button class="chip" onclick="toggle(this)">Fearful</button><button class="chip" onclick="toggle(this)">FOMO</button><button class="chip" onclick="toggle(this)">Doubtful</button><button class="chip" onclick="toggle(this)">Impatient</button><button class="chip" onclick="toggle(this)">Revenge</button><button class="chip" onclick="toggle(this)">Other</button>
+</div>
+
+<label>Confidence before entry: <span id="confidenceValue">5</span>/10</label>
+<input id="confidence" type="range" min="1" max="10" value="5" oninput="confidenceValue.textContent=this.value">
+
+<label>Did you follow your rules?</label>
+<div class="chips" data-group="rules"><button class="chip" onclick="pick(this,'rules')">Yes</button><button class="chip" onclick="pick(this,'rules')">No</button></div>
+
+<label>Did you feel this was an A+ setup?</label>
+<div class="chips" data-group="aPlus"><button class="chip" onclick="pick(this,'aPlus')">Yes</button><button class="chip" onclick="pick(this,'aPlus')">No</button></div>
+
+<label>What were you thinking/feeling when you entered?</label><textarea id="thoughts" placeholder="Be honest. This is for your psychological progress."></textarea>
+
+<label>After the trade — how did you feel?</label>
+<div class="chips" data-group="afterEmotion">
+<button class="chip" onclick="toggle(this)">Calm</button><button class="chip" onclick="toggle(this)">Happy</button><button class="chip" onclick="toggle(this)">Disappointed</button><button class="chip" onclick="toggle(this)">Angry</button><button class="chip" onclick="toggle(this)">Fearful</button><button class="chip" onclick="toggle(this)">Overconfident</button><button class="chip" onclick="toggle(this)">Frustrated</button><button class="chip" onclick="toggle(this)">Neutral</button>
+</div>
+
+<label>Did you interfere with the trade?</label>
+<div class="chips" data-group="interference">
+<button class="chip" onclick="toggle(this)">Moved SL</button><button class="chip" onclick="toggle(this)">Exited early</button><button class="chip" onclick="toggle(this)">Held beyond target</button><button class="chip" onclick="toggle(this)">Increased position</button><button class="chip" onclick="toggle(this)">None</button>
+</div>
+
+<label>What did you learn?</label><textarea id="lesson" placeholder="One honest takeaway."></textarea>
+
+<button class="primary" onclick="saveTrade()">SAVE TRADE</button>
+</div>
+</section>
+
+<section id="history" class="page">
+<div class="card"><h2>Trade history</h2><div id="historyList"></div></div>
+</section>
+
+
+<section id="calendar" class="page">
+<div class="card">
+  <div class="row">
+    <button class="secondary" onclick="changeMonth(-1)">‹</button>
+    <h2 id="calendarTitle" style="margin:0">Month</h2>
+    <button class="secondary" onclick="changeMonth(1)">›</button>
+  </div>
+  <p class="muted">Each box shows that day's net trading result. Darker green = bigger profit. Darker red = bigger loss.</p>
+  <div id="calendarGrid" style="display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px"></div>
+  <div style="display:flex;gap:10px;align-items:center;justify-content:center;margin-top:12px;font-size:11px">
+    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#dcfce7;vertical-align:middle"></i> Small profit</span>
+    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#166534;vertical-align:middle"></i> Big profit</span>
+    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#fee2e2;vertical-align:middle"></i> Small loss</span>
+    <span><i style="display:inline-block;width:12px;height:12px;border-radius:3px;background:#991b1b;vertical-align:middle"></i> Big loss</span>
+  </div>
+</div>
+<div class="card">
+  <div class="grid">
+    <div class="stat"><span class="muted">Green days</span><b id="greenDays">0</b></div>
+    <div class="stat"><span class="muted">Red days</span><b id="redDays">0</b></div>
+    <div class="stat"><span class="muted">Month P&L</span><b id="monthPnl">₹0</b></div>
+    <div class="stat"><span class="muted">No-trade days</span><b id="noTradeDays">0</b></div>
+  </div>
+</div>
+</section>
+
+<section id="psych" class="page">
+<div class="card"><h2>Psychological progress</h2><p class="muted">This page becomes more useful as you approach 100 trades.</p>
+<div class="grid">
+<div class="stat"><span class="muted">Rule adherence</span><b id="psychRules">—</b></div>
+<div class="stat"><span class="muted">A+ setups</span><b id="psychA">—</b></div>
+<div class="stat"><span class="muted">FOMO</span><b id="psychFomo">0</b></div>
+<div class="stat"><span class="muted">Interference</span><b id="psychInterf">0</b></div>
+</div></div>
+<div class="card"><h2>Emotion → performance</h2><div id="emotionTable"></div></div>
+<div class="card"><h2>Last 25 vs previous 25</h2><div id="comparison"></div></div>
+</section>
+</main>
+
+<script>
+let trades=JSON.parse(localStorage.getItem('myTradingJournal')||'[]');
+let selected={index:'',option:'',candle:'',rules:'',aPlus:''};
+let editingId=null;
+let calendarDate=new Date();
+
+function showPage(id,btn){document.querySelectorAll('.page').forEach(x=>x.classList.remove('active'));document.getElementById(id).classList.add('active');document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));if(btn)btn.classList.add('active');if(id==='history')renderHistory();if(id==='calendar')renderCalendar();if(id==='psych')renderPsych();updateHome();scrollTo(0,0)}
+function pick(el,group){el.parentElement.querySelectorAll('.chip').forEach(x=>x.classList.remove('sel'));el.classList.add('sel');selected[group]=el.textContent}
+function toggle(el){el.classList.toggle('sel')}
+function values(group){return [...document.querySelectorAll(`[data-group="${group}"] .chip.sel`)].map(x=>x.textContent)}
+function num(id){return parseFloat(document.getElementById(id).value)||0}
+function saveTrade(){
+ if(!selected.index||!selected.option||!selected.candle||!selected.rules||!selected.aPlus){
+   alert('Please select Index, Option, Entry candle, Rules followed and A+ setup.'); return;
+ }
+ let ep=num('entryPrice'),xp=num('exitPrice'),q=num('qty'),pnl=(xp-ep)*q*(selected.option==='CE'?1:-1);
+ let existing=editingId ? trades.find(x=>x.id===editingId) : null;
+ if(!editingId){
+   let today=new Date().toDateString();
+   if(trades.filter(x=>new Date(x.date).toDateString()===today).length>=2){
+     alert('You already recorded 2 trades today. Your rule is max 2 trades/day.'); return;
+   }
+ }
+ let t={
+   id: editingId || Date.now(),
+   date: existing ? existing.date : new Date().toISOString(),
+   index:selected.index,option:selected.option,strike:num('strike'),
+   expiry:document.getElementById('expiry').value,entryTime:document.getElementById('entryTime').value,
+   exitTime:document.getElementById('exitTime').value,entryPrice:ep,exitPrice:xp,qty:q,
+   capital:num('capital'),pnl,candle:selected.candle,why:document.getElementById('why').value,
+   emotion:values('emotion'),confidence:num('confidence'),rules:selected.rules,aPlus:selected.aPlus,
+   thoughts:document.getElementById('thoughts').value,afterEmotion:values('afterEmotion'),
+   interference:values('interference'),lesson:document.getElementById('lesson').value
+ };
+ if(editingId) trades=trades.map(x=>x.id===editingId?t:x); else trades.unshift(t);
+ localStorage.setItem('myTradingJournal',JSON.stringify(trades));
+ alert(editingId?'Trade updated.':'Trade saved.');
+ resetForm();
+ showPage('history',[...document.querySelectorAll('nav button')].find(b=>b.textContent==='History'));
+}
+function resetForm(){
+ document.querySelectorAll('input:not([type=range]),textarea').forEach(x=>x.value='');
+ document.getElementById('confidence').value=5;
+ document.getElementById('confidenceValue').textContent='5';
+ document.querySelectorAll('.chip.sel').forEach(x=>x.classList.remove('sel'));
+ selected={index:'',option:'',candle:'',rules:'',aPlus:''};
+ editingId=null;
+ document.getElementById('formTitle').textContent='Record trade';
+}
+function updateHome(){
+ let today=new Date().toDateString(), tt=trades.filter(x=>new Date(x.date).toDateString()===today);
+ todayTrades.textContent=tt.length+' / 2';totalTrades.textContent=trades.length;
+ let wins=trades.filter(x=>x.pnl>0).length;winRate.textContent=trades.length?(wins/trades.length*100).toFixed(0)+'%':'—';
+ let rr=trades.length?trades.filter(x=>x.rules==='Yes').length/trades.length*100:0;rulesRate.textContent=trades.length?rr.toFixed(0)+'%':'—';
+ fomoCount.textContent=trades.filter(x=>x.emotion.includes('FOMO')).length;
+ todayRules.textContent=tt.length?(tt.filter(x=>x.rules==='Yes').length/tt.length*100).toFixed(0)+'%':'—';
+ goalBar.style.width=Math.min(trades.length,100)+'%';goalCount.textContent=Math.min(trades.length,100)+' / 100 trades';
+ goalText.textContent=trades.length>=100?'100 trades completed. Review your psychological pattern.':(100-trades.length)+' more trades to reach the first 100-trade review.';
+}
+function renderHistory(){
+ if(!trades.length){
+   historyList.innerHTML='<div class="empty">No trades yet.<br>Start with your first trade.</div>'; return;
+ }
+ historyList.innerHTML=trades.map(t=>`
+ <div class="card trade">
+   <div class="row">
+     <h3>${esc(t.index)} ${t.strike||''} ${esc(t.option)}</h3>
+     <span class="pnl ${t.pnl>=0?'win':'loss'}">${t.pnl>=0?'+':''}₹${Math.round(t.pnl).toLocaleString('en-IN')}</span>
+   </div>
+   <p>${new Date(t.date).toLocaleDateString('en-IN')} • ${esc(t.candle)} • ${t.rules==='Yes'?'Rules ✓':'Rule violation ⚠️'}</p>
+   <p><b>Why:</b> ${esc(t.why||'—')}</p>
+   <p><b>Emotion:</b> ${esc(t.emotion.join(', ')||'—')} • Confidence ${t.confidence}/10</p>
+   <p><b>Lesson:</b> ${esc(t.lesson||'—')}</p>
+   <div style="display:flex;gap:8px;margin-top:10px">
+     <button class="secondary" onclick="editTrade(${t.id})">✏️ Edit</button>
+     <button class="secondary danger" onclick="deleteTrade(${t.id})">🗑 Delete</button>
+   </div>
+ </div>`).join('');
+}
+
+function setGroup(group, vals){
+ document.querySelectorAll(`[data-group="${group}"] .chip`).forEach(el=>{
+   el.classList.toggle('sel', vals.includes(el.textContent));
+ });
+}
+
+function editTrade(id){
+ const t=trades.find(x=>x.id===id); if(!t) return;
+ editingId=id;
+ selected={index:t.index||'',option:t.option||'',candle:t.candle||'',rules:t.rules||'',aPlus:t.aPlus||''};
+
+ document.getElementById('strike').value=t.strike||'';
+ document.getElementById('expiry').value=t.expiry||'';
+ document.getElementById('entryTime').value=t.entryTime||'';
+ document.getElementById('exitTime').value=t.exitTime||'';
+ document.getElementById('entryPrice').value=t.entryPrice||'';
+ document.getElementById('exitPrice').value=t.exitPrice||'';
+ document.getElementById('qty').value=t.qty||'';
+ document.getElementById('capital').value=t.capital||'';
+ document.getElementById('why').value=t.why||'';
+ document.getElementById('confidence').value=t.confidence||5;
+ document.getElementById('confidenceValue').textContent=t.confidence||5;
+ document.getElementById('thoughts').value=t.thoughts||'';
+ document.getElementById('lesson').value=t.lesson||'';
+
+ setGroup('index',[t.index]);
+ setGroup('option',[t.option]);
+ setGroup('candle',[t.candle]);
+ setGroup('rules',[t.rules]);
+ setGroup('aPlus',[t.aPlus]);
+ setGroup('emotion',t.emotion||[]);
+ setGroup('afterEmotion',t.afterEmotion||[]);
+ setGroup('interference',t.interference||[]);
+
+ document.getElementById('formTitle').textContent='Edit trade';
+ showPage('add',[...document.querySelectorAll('nav button')].find(b=>b.textContent.includes('Trade')));
+}
+
+function deleteTrade(id){
+ const t=trades.find(x=>x.id===id); if(!t) return;
+ if(!confirm(`Delete ${t.index} ${t.strike||''} ${t.option} trade? This cannot be undone.`)) return;
+ trades=trades.filter(x=>x.id!==id);
+ localStorage.setItem('myTradingJournal',JSON.stringify(trades));
+ renderHistory(); updateHome(); renderPsych();
+}
+
+function monthKey(y,m){return y+'-'+String(m+1).padStart(2,'0')}
+function dailyPnlMap(y,m){
+ let map={};
+ trades.forEach(t=>{
+   let d=new Date(t.date);
+   if(d.getFullYear()===y && d.getMonth()===m){
+     let key=d.getDate();
+     map[key]=(map[key]||0)+(Number(t.pnl)||0);
+   }
+ });
+ return map;
+}
+function changeMonth(delta){
+ calendarDate.setMonth(calendarDate.getMonth()+delta);
+ renderCalendar();
+}
+function renderCalendar(){
+ const y=calendarDate.getFullYear(), m=calendarDate.getMonth();
+ const names=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+ const map=dailyPnlMap(y,m);
+ const first=new Date(y,m,1).getDay();
+ const days=new Date(y,m+1,0).getDate();
+ const vals=Object.values(map);
+ const maxAbs=Math.max(...vals.map(v=>Math.abs(v)),1);
+ calendarTitle.textContent=calendarDate.toLocaleString('en-IN',{month:'long',year:'numeric'});
+ let cells=names.map(n=>`<div style="text-align:center;font-size:10px;font-weight:700;color:#64748b;padding:3px">${n}</div>`).join('');
+ for(let i=0;i<first;i++) cells+='<div></div>';
+ for(let d=1;d<=days;d++){
+   let v=map[d];
+   let has=Object.prototype.hasOwnProperty.call(map,d);
+   let bg='#f8fafc', fg='#64748b', border='#e5e7eb';
+   if(has && v!==0){
+     let intensity=Math.max(0.15,Math.min(1,Math.abs(v)/maxAbs));
+     if(v>0){
+       // light to deep green
+       let g=Math.round(255-(120*intensity));
+       let r=Math.round(220-(80*intensity));
+       let b=Math.round(231-(100*intensity));
+       bg=`rgb(${r},${g},${b})`; fg=intensity>.62?'white':'#166534'; border=bg;
+     }else{
+       // light to deep red
+       let r=Math.round(254-(100*intensity));
+       let g=Math.round(226-(130*intensity));
+       let b=Math.round(226-(130*intensity));
+       bg=`rgb(${r},${g},${b})`; fg=intensity>.62?'white':'#991b1b'; border=bg;
+     }
+   } else if(has && v===0){ bg='#f1f5f9'; }
+   let dayTrades=trades.filter(t=>{let dt=new Date(t.date);return dt.getFullYear()===y&&dt.getMonth()===m&&dt.getDate()===d});
+let dayCount=dayTrades.length;
+let ruleBreaks=dayTrades.filter(t=>t.rules!=='Yes').length;
+let dayLabel=has?`${v>=0?'+':''}₹${Math.round(v).toLocaleString('en-IN')}`:'';
+let tradeLabel=dayCount?`${dayCount} trade${dayCount>1?'s':''}`:'No trade';
+let ruleLabel=ruleBreaks?`${ruleBreaks} rule break${ruleBreaks>1?'s':''}`:(dayCount?'Rules ✓':'');
+cells+=`<button onclick="openDay(${y},${m},${d})" style="min-height:88px;width:100%;border:1px solid ${border};border-radius:8px;background:${bg};color:${fg};padding:6px;display:flex;flex-direction:column;align-items:flex-start;justify-content:space-between;cursor:pointer;overflow:hidden">
+     <div style="font-size:11px;font-weight:800;width:100%;text-align:left">${d}</div>
+     <div style="width:100%;text-align:center;font-size:11px;font-weight:800;line-height:1.2;overflow-wrap:anywhere">${dayLabel}</div>
+     <div style="width:100%;text-align:center;font-size:9px;line-height:1.2;overflow-wrap:anywhere">${tradeLabel}</div>
+     ${ruleLabel?`<div style="width:100%;text-align:center;font-size:8px;line-height:1.2;overflow-wrap:anywhere">${ruleLabel}</div>`:'<div style="height:9px"></div>'}
+   </button>`;
+ }
+ calendarGrid.innerHTML=cells;
+ let monthTrades=trades.filter(t=>{let d=new Date(t.date);return d.getFullYear()===y&&d.getMonth()===m});
+ let green=Object.values(map).filter(v=>v>0).length, red=Object.values(map).filter(v=>v<0).length;
+ greenDays.textContent=green; redDays.textContent=red;
+ monthPnl.textContent=(monthTrades.reduce((a,t)=>a+(Number(t.pnl)||0),0)>=0?'+':'')+'₹'+Math.round(monthTrades.reduce((a,t)=>a+(Number(t.pnl)||0),0)).toLocaleString('en-IN');
+ noTradeDays.textContent=days-green-red;
+}
+function openDay(y,m,d){
+ let dayTrades=trades.filter(t=>{let x=new Date(t.date);return x.getFullYear()===y&&x.getMonth()===m&&x.getDate()===d});
+ if(!dayTrades.length){alert('No trades recorded for this day.');return;}
+ let total=dayTrades.reduce((a,t)=>a+(Number(t.pnl)||0),0);
+ alert(`${new Date(y,m,d).toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'})}\nTrades: ${dayTrades.length}\nNet P&L: ${total>=0?'+':''}₹${Math.round(total).toLocaleString('en-IN')}\n\n${dayTrades.map((t,i)=>`${i+1}. ${t.index} ${t.strike||''} ${t.option} • ${t.candle} • ${t.pnl>=0?'+':''}₹${Math.round(t.pnl).toLocaleString('en-IN')}`).join('\n')}`);
+}
+
+function renderPsych(){
+ let n=trades.length;psychRules.textContent=n?(trades.filter(x=>x.rules==='Yes').length/n*100).toFixed(0)+'%':'—';
+ psychA.textContent=n?(trades.filter(x=>x.aPlus==='Yes').length/n*100).toFixed(0)+'%':'—';
+ psychFomo.textContent=trades.filter(x=>x.emotion.includes('FOMO')).length;
+ psychInterf.textContent=trades.filter(x=>x.interference.length&& !x.interference.includes('None')).length;
+ let map={};trades.forEach(t=>t.emotion.forEach(e=>{if(!map[e])map[e]={n:0,w:0,p:0};map[e].n++;if(t.pnl>0)map[e].w++;map[e].p+=t.pnl}));
+ emotionTable.innerHTML=Object.keys(map).length?'<table><tr><th>Emotion</th><th>Trades</th><th>Win rate</th><th>P&L</th></tr>'+Object.entries(map).sort((a,b)=>b[1].n-a[1].n).map(([e,v])=>`<tr><td>${e}</td><td>${v.n}</td><td>${(v.w/v.n*100).toFixed(0)}%</td><td>₹${Math.round(v.p).toLocaleString('en-IN')}</td></tr>`).join('')+'</table>':'<div class="empty">Your emotional patterns will appear here after you record trades.</div>';
+ let a=trades.slice(25,50),b=trades.slice(0,25); // older/newer because newest first
+ if(n<50){comparison.innerHTML='<div class="empty">Complete at least 50 trades to compare two 25-trade periods.</div>';return}
+ let rate=x=>x.length?x.filter(t=>t.rules==='Yes').length/x.length*100:0;
+ comparison.innerHTML=`<table><tr><th></th><th>Older 25</th><th>Recent 25</th></tr><tr><td>Rule adherence</td><td>${rate(a).toFixed(0)}%</td><td>${rate(b).toFixed(0)}%</td></tr><tr><td>FOMO trades</td><td>${a.filter(t=>t.emotion.includes('FOMO')).length}</td><td>${b.filter(t=>t.emotion.includes('FOMO')).length}</td></tr><tr><td>Interference</td><td>${a.filter(t=>t.interference.length&&!t.interference.includes('None')).length}</td><td>${b.filter(t=>t.interference.length&&!t.interference.includes('None')).length}</td></tr></table>`;
+}
+function esc(s){return String(s).replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#039;'}[m]))}
+updateHome();
+</script>
+<script>if("serviceWorker" in navigator){navigator.serviceWorker.register("sw.js").catch(()=>{})}</script></body>
+</html>
